@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VisionGuard AI | Scan Center</title>
+  <meta name="description" content="Simulate real-time machine defect inspections and bounding box visualizations.">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* Additional inline layouts specific to scanner workspace */
+    .results-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+    
+    .diagnostic-alert-box {
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    
+    .diagnostic-alert-box.status-Critical {
+      border-color: var(--color-critical);
+      background: rgba(255, 51, 102, 0.05);
+    }
+    .diagnostic-alert-box.status-Warning {
+      border-color: var(--color-warning);
+      background: rgba(255, 170, 0, 0.05);
+    }
+    .diagnostic-alert-box.status-Healthy {
+      border-color: var(--color-healthy);
+      background: rgba(16, 185, 129, 0.05);
+    }
+    
+    .diagnostic-alert-icon {
+      font-size: 2rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Premium Navigation Bar -->
+    <nav class="navbar">
+      <a href="index.html" class="nav-brand">
+        <div class="brand-icon">VG</div>
+        <span class="brand-text">VisionGuard AI</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="dashboard.html">AI Scanner</a></li>
+        <li><a href="maintenance.html">Maintenance</a></li>
+        <li><a href="analytics.html">Analytics</a></li>
+        <li><a href="inventory.html">Inventory</a></li>
+        <li><a href="settings.html">Settings</a></li>
+      </ul>
+      <div class="nav-status">
+        <div class="health-badge healthy" id="system-health-badge">
+          <span class="health-dot"></span> System Nominal
+        </div>
+      </div>
+      <button class="nav-toggle" id="nav-toggle-btn" aria-label="Toggle Menu">
+        <span class="bar"></span>
+        <span class="bar"></span>
+        <span class="bar"></span>
+      </button>
+    </nav>
+
+    <!-- Main Workspace -->
+    <main class="main-content">
+      <div class="page-header">
+        <div>
+          <h1>AI Defect Scan Center</h1>
+          <p>Execute visual inspect scans and review neural network object detection metrics</p>
+        </div>
+        <div>
+          <span style="color: #64748b; font-size: 0.85rem; font-weight: 600;">Active Pipeline: </span>
+          <span class="status-pill healthy" style="font-size: 0.75rem;" id="active-pipeline-model">YOLOv8-MetalDefect</span>
+        </div>
+      </div>
+
+      <div class="grid-main-dashboard">
+        
+        <!-- Left Side: Interactive Vision Center -->
+        <div style="display:flex; flex-direction:column; gap:1.75rem;">
+          
+          <!-- Image Canvas Viewer -->
+          <div class="glass-card" style="padding:1.25rem;">
+            <div class="scanner-container" id="scanner-viewport">
+              <div class="scanner-canvas-wrapper" id="canvas-wrapper">
+                <canvas id="canvas-inspector" class="scanner-canvas"></canvas>
+                <div class="scan-laser" id="laser-overlay"></div>
+              </div>
+              
+              <!-- Loader overlay during AI processing -->
+              <div class="scan-overlay-loader" id="loader-overlay">
+                <div class="radar-spinner"></div>
+                <div style="text-align: center;">
+                  <h3 id="loader-text" style="color: var(--secondary); font-family: var(--font-heading); margin-bottom: 0.25rem;">Inference Running...</h3>
+                  <p style="color: #94a3b8; font-size: 0.8rem;" id="loader-subtext">Running YOLOv8 spatial localization</p>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Asset quick picker gallery -->
+            <div class="gallery-section">
+              <h4 style="margin-bottom: 0.75rem; font-size: 0.9rem; color: #94a3b8;">Inspection Asset Library (Click to Scan)</h4>
+              <div class="gallery-grid" id="asset-picker-grid">
+                <!-- Dynamically loaded presets -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Custom File Upload Zone -->
+          <div class="glass-card">
+            <h3>Inspect Custom Component Image</h3>
+            <p style="color:#94a3b8; font-size:0.85rem; margin-bottom:1rem;">Upload a custom image (JPG/PNG) of a bearing or gear to execute simulated anomaly analysis.</p>
+            <div class="upload-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
+              <div class="upload-icon">📤</div>
+              <p><strong>Drag & Drop Image</strong> or click to browse files</p>
+              <p style="color:#64748b; font-size:0.75rem; margin-top:0.25rem;">Supported: JPG, PNG, WEBP up to 8MB</p>
+              <input type="file" id="file-input" style="display:none;" accept="image/*">
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Right Side: AI Diagnostic Report & Actions -->
+        <div class="results-grid">
+          
+          <!-- Analysis Status card -->
+          <div class="glass-card">
+            <h2>Inspection Summary</h2>
+            
+            <div id="no-scan-placeholder" style="padding: 2rem 0; text-align: center; color: #64748b;">
+              <span style="font-size: 2.5rem; display:block; margin-bottom:0.5rem;">🔍</span>
+              <p>Select or upload an asset to run AI diagnostic scans</p>
+            </div>
+            
+            <div id="results-panel" style="display:none; margin-top:1rem;">
+              <div class="diagnostic-alert-box" id="result-status-card">
+                <div class="diagnostic-alert-icon" id="result-status-icon">⚠️</div>
+                <div>
+                  <h3 id="result-part-name" style="font-size:1.1rem; margin-bottom: 0.15rem;">Drive Shaft Gear</h3>
+                  <div class="status-pill" id="result-status-badge">CRITICAL</div>
+                </div>
+              </div>
+
+              <!-- Anomaly breakdown -->
+              <div style="margin-top: 1.5rem;">
+                <h4 style="font-size: 0.9rem; color: #94a3b8; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 0.75rem;">AI Detection Outputs</h4>
+                <div class="defect-list" id="defect-items-container">
+                  <!-- Dynamically written defect reports -->
+                </div>
+              </div>
+              
+              <!-- Metrics overlay -->
+              <div style="margin-top: 1.5rem; display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+                <div class="rec-block" style="padding: 0.75rem;">
+                  <div class="rec-label" style="margin-bottom:0.15rem;">Avg Confidence</div>
+                  <div class="rec-value" style="font-size:1.1rem;" id="result-avg-conf">96.4%</div>
+                </div>
+                <div class="rec-block" style="padding: 0.75rem;">
+                  <div class="rec-label" style="margin-bottom:0.15rem;">RUL Estimate</div>
+                  <div class="rec-value" style="font-size:1.1rem; color:var(--secondary);" id="result-rul">12 Hours</div>
+                </div>
+              </div>
+
+              <!-- Recommendation Summary preview -->
+              <div class="rec-block" style="margin-top: 1.25rem;">
+                <div class="rec-label">Critical Action Required</div>
+                <p style="font-size: 0.85rem; line-height: 1.4; color: #cbd5e1;" id="result-rec-summary">Immediate gear replacement is mandatory. Lockout/Tagout gearbox main power.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Smart Action triggers -->
+          <div class="glass-card" id="actions-panel-card" style="display:none;">
+            <h2>Action Recommendations</h2>
+            <p style="color:#94a3b8; font-size:0.85rem; margin-bottom:1.25rem;">Trigger automated CMMS routines based on detection severity.</p>
+            
+            <div style="display:flex; flex-direction:column; gap:0.75rem;">
+              <button class="btn btn-primary" onclick="dispatchWorkOrder()" id="btn-dispatch-wo">
+                🔧 Create Maintenance Work Order
+              </button>
+              <button class="btn btn-secondary" onclick="checkSpares()" id="btn-check-spares">
+                📦 Check Spares Compatibility
+              </button>
+              <button class="btn btn-secondary" onclick="exportInspectionPDF()" id="btn-export-pdf">
+                📄 Export Inspection Certificate
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <p>© 2026 VisionGuard Systems Inc. • Industrial Edge Diagnostic Client</p>
+    </footer>
+  </div>
+
+  <!-- Load script dependencies -->
+  <script src="data.js"></script>
+  <script src="shared.js"></script>
+  
+  <script>
+    const canvas = document.getElementById("canvas-inspector");
+    const ctx = canvas.getContext("2d");
+    
+    let activePartId = null;
+    let selectedImageSrc = "";
+    let isCustomUpload = false;
+    let customImageLoaded = null;
+
+    // Load initial states from Query Parameters
+    document.addEventListener("DOMContentLoaded", () => {
+      // Load preset picker gallery
+      const picker = document.getElementById("asset-picker-grid");
+      picker.innerHTML = "";
+      
+      const localDB = getSystemDB();
+      
+      localDB.parts.forEach(part => {
+        const item = document.createElement("div");
+        item.className = "gallery-item";
+        item.id = `gallery-item-${part.id}`;
+        item.onclick = () => selectAndScanPreset(part.id);
+        
+        let labelColor = "var(--color-healthy)";
+        if (part.status === "Critical") labelColor = "var(--color-critical)";
+        if (part.status === "Warning") labelColor = "var(--color-warning)";
+        
+        item.innerHTML = `
+          <img src="${part.image}" alt="${part.name}">
+          <div class="gallery-item-label">${part.name}</div>
+          <span style="position:absolute; top:2px; right:2px; width:10px; height:10px; background:${labelColor}; border-radius:50%;"></span>
+        `;
+        picker.appendChild(item);
+      });
+      
+      // Update model config display from settings
+      const activeModel = localDB.models.find(m => m.active);
+      if (activeModel) {
+        document.getElementById("active-pipeline-model").innerText = activeModel.name;
+      }
+      
+      // Parse Query URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const partParam = urlParams.get("part");
+      
+      if (partParam) {
+        selectAndScanPreset(partParam);
+      } else {
+        // Load default first preset without scanning automatically
+        loadPresetDataOnly("gear_defective");
+      }
+    });
+
+    // Load preset file details in cache but do not trigger full scanning delay
+    function loadPresetDataOnly(partId) {
+      activePartId = partId;
+      isCustomUpload = false;
+      
+      // Highlight selection in gallery
+      document.querySelectorAll(".gallery-item").forEach(el => el.classList.remove("selected"));
+      const selectedEl = document.getElementById(`gallery-item-${partId}`);
+      if (selectedEl) selectedEl.classList.add("selected");
+      
+      const localDB = getSystemDB();
+      const part = localDB.parts.find(p => p.id === partId);
+      if (!part) return;
+      
+      selectedImageSrc = part.image;
+      
+      // Load and draw image immediately
+      const img = new Image();
+      img.onload = () => {
+        canvas.width = img.naturalWidth || 800;
+        canvas.height = img.naturalHeight || 800;
+        ctx.clearRect(0,0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        
+        // Hide panel details until user clicks / scans
+        document.getElementById("no-scan-placeholder").style.display = "block";
+        document.getElementById("results-panel").style.display = "none";
+        document.getElementById("actions-panel-card").style.display = "none";
+      };
+      img.src = part.image;
+    }
+
+    // Select and run full AI Scan Simulation
+    function selectAndScanPreset(partId) {
+      activePartId = partId;
+      isCustomUpload = false;
+      
+      document.querySelectorAll(".gallery-item").forEach(el => el.classList.remove("selected"));
+      const selectedEl = document.getElementById(`gallery-item-${partId}`);
+      if (selectedEl) selectedEl.classList.add("selected");
+      
+      const localDB = getSystemDB();
+      const part = localDB.parts.find(p => p.id === partId);
+      if (!part) return;
+      
+      selectedImageSrc = part.image;
+      
+      // Trigger scan simulation
+      triggerScannerAnimation(() => {
+        renderAnalysisReport(part);
+      });
+    }
+
+    // Scan Animation triggers
+    function triggerScannerAnimation(onComplete) {
+      const loader = document.getElementById("loader-overlay");
+      const viewport = document.getElementById("scanner-viewport");
+      
+      // Reset view
+      document.getElementById("no-scan-placeholder").style.display = "none";
+      document.getElementById("results-panel").style.display = "none";
+      document.getElementById("actions-panel-card").style.display = "none";
+      
+      // Show Loader
+      loader.classList.add("active");
+      viewport.classList.add("scanning");
+      
+      // Draw plain image first (no bounding boxes)
+      const img = new Image();
+      img.onload = () => {
+        canvas.width = img.naturalWidth || 800;
+        canvas.height = img.naturalHeight || 800;
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        
+        // Simulate model inference time (1.8s)
+        setTimeout(() => {
+          loader.classList.remove("active");
+          viewport.classList.remove("scanning");
+          
+          if (onComplete) onComplete();
+          showToast("AI Vision analysis successfully executed.", "success");
+        }, 1800);
+      };
+      
+      if (isCustomUpload && customImageLoaded) {
+        img.src = customImageLoaded.src;
+      } else {
+        img.src = selectedImageSrc;
+      }
+    }
+
+    // Drawing Bounding Boxes & Rendering Reports
+    function renderAnalysisReport(partData) {
+      // 1. Draw Bounding Boxes on Canvas
+      const img = new Image();
+      img.onload = () => {
+        canvas.width = img.naturalWidth || 800;
+        canvas.height = img.naturalHeight || 800;
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        
+        // Check if there are defects
+        if (partData.defects && partData.defects.length > 0) {
+          partData.defects.forEach(defect => {
+            let color = "var(--primary)";
+            let glow = "rgba(99, 102, 241, 0.4)";
+            
+            if (defect.severity === "Critical" || defect.severity === "High") {
+              color = "#ff3366"; // Neon Red
+            } else if (defect.severity === "Medium") {
+              color = "#ffaa00"; // Amber
+            }
+            
+            // Draw box
+            ctx.strokeStyle = color;
+            ctx.lineWidth = Math.max(4, canvas.width / 150); // scales with image resolution
+            ctx.shadowColor = color;
+            ctx.shadowBlur = 8;
+            ctx.strokeRect(defect.box.x, defect.box.y, defect.box.width, defect.box.height);
+            
+            // Draw text label block
+            ctx.shadowBlur = 0; // disable shadow for text
+            ctx.fillStyle = color;
+            const padding = Math.max(5, canvas.width / 100);
+            const fontSize = Math.max(14, canvas.width / 40);
+            ctx.font = `600 ${fontSize}px var(--font-heading)`;
+            
+            const labelText = `${defect.type} (${defect.confidence}%)`;
+            const textWidth = ctx.measureText(labelText).width;
+            
+            // Draw background pill for label
+            ctx.fillRect(defect.box.x, defect.box.y - fontSize - padding*1.5, textWidth + padding*2, fontSize + padding*1.5);
+            
+            // Write text inside pill
+            ctx.fillStyle = "#ffffff";
+            ctx.fillText(labelText, defect.box.x + padding, defect.box.y - padding);
+          });
+        }
+      };
+      
+      if (isCustomUpload && customImageLoaded) {
+        img.src = customImageLoaded.src;
+      } else {
+        img.src = partData.image;
+      }
+      
+      // 2. Render HTML Summary Card details
+      document.getElementById("results-panel").style.display = "block";
+      document.getElementById("actions-panel-card").style.display = "block";
+      
+      document.getElementById("result-part-name").innerText = partData.name;
+      
+      const badge = document.getElementById("result-status-badge");
+      const cardBorder = document.getElementById("result-status-card");
+      const icon = document.getElementById("result-status-icon");
+      
+      badge.className = `status-pill ${partData.status.toLowerCase()}`;
+      badge.innerText = partData.status;
+      cardBorder.className = `diagnostic-alert-box status-${partData.status}`;
+      
+      if (partData.status === "Critical") {
+        icon.innerText = "🛑";
+      } else if (partData.status === "Warning") {
+        icon.innerText = "⚠️";
+      } else {
+        icon.innerText = "✅";
+      }
+      
+      // Defects list
+      const list = document.getElementById("defect-items-container");
+      list.innerHTML = "";
+      
+      if (partData.defects && partData.defects.length > 0) {
+        partData.defects.forEach(def => {
+          const item = document.createElement("div");
+          item.className = `defect-item severity-${def.severity}`;
+          item.innerHTML = `
+            <div class="defect-header">
+              <span class="defect-title">${def.type}</span>
+              <span class="defect-conf">${def.confidence}% conf</span>
+            </div>
+            <p class="defect-desc">${def.details}</p>
+          `;
+          list.appendChild(item);
+        });
+        
+        // Calculate average confidence
+        const totalConf = partData.defects.reduce((acc, curr) => acc + curr.confidence, 0);
+        const avgConf = (totalConf / partData.defects.length).toFixed(1);
+        document.getElementById("result-avg-conf").innerText = `${avgConf}%`;
+      } else {
+        list.innerHTML = `
+          <div class="defect-item" style="border-left-color: var(--color-healthy);">
+            <div class="defect-header">
+              <span class="defect-title">Structural Safety Verified</span>
+            </div>
+            <p class="defect-desc">No micro-cracks or fatigue defects localized by YOLO network.</p>
+          </div>
+        `;
+        document.getElementById("result-avg-conf").innerText = "99.8%";
+      }
+      
+      document.getElementById("result-rul").innerText = partData.recommendations.rul;
+      document.getElementById("result-rec-summary").innerText = partData.recommendations.urgency + ": " + partData.recommendations.actions[0];
+      
+      // Update inspection stats in DB
+      updateDB(db => {
+        db.stats.totalScanned += 1;
+        db.stats.scansToday += 1;
+        
+        // Add entry to history log
+        const timestamp = new Date().toISOString().replace('T', ' ').substring(0, 16);
+        const primaryDefect = partData.defects.length > 0 ? partData.defects[0].type : "None";
+        const newLog = {
+          id: `ins_${Math.floor(1000 + Math.random()*9000)}`,
+          timestamp: timestamp,
+          partName: partData.name,
+          status: partData.status,
+          defectType: primaryDefect,
+          inspector: "Operator AI (Edge client)",
+          cost: partData.status === "Critical" ? 1200 : (partData.status === "Warning" ? 450 : 0)
+        };
+        db.history.unshift(newLog);
+      });
+    }
+
+    // Drag and drop events
+    const dropZone = document.getElementById("drop-zone");
+    const fileInput = document.getElementById("file-input");
+
+    fileInput.addEventListener("change", (e) => {
+      if (e.target.files.length > 0) {
+        processUploadedImage(e.target.files[0]);
+      }
+    });
+
+    dropZone.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      dropZone.style.borderColor = "var(--primary)";
+      dropZone.style.background = "rgba(99, 102, 241, 0.05)";
+    });
+
+    dropZone.addEventListener("dragleave", () => {
+      dropZone.style.borderColor = "var(--border-color)";
+      dropZone.style.background = "rgba(255, 255, 255, 0.01)";
+    });
+
+    dropZone.addEventListener("drop", (e) => {
+      e.preventDefault();
+      dropZone.style.borderColor = "var(--border-color)";
+      dropZone.style.background = "rgba(255, 255, 255, 0.01)";
+      if (e.dataTransfer.files.length > 0) {
+        processUploadedImage(e.dataTransfer.files[0]);
+      }
+    });
+
+    function processUploadedImage(file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        isCustomUpload = true;
+        customImageLoaded = new Image();
+        customImageLoaded.onload = () => {
+          // Trigger scan
+          triggerScannerAnimation(() => {
+            // Simulate a defect detection for the uploaded custom file
+            const mockCustomPart = {
+              id: "custom_upload",
+              name: `Custom Upload (${file.name})`,
+              image: event.target.result,
+              status: "Warning",
+              defects: [
+                {
+                  id: "def_custom_01",
+                  type: "Surface Anomaly (Simulated)",
+                  severity: "Medium",
+                  confidence: 81.3,
+                  box: { x: Math.floor(customImageLoaded.naturalWidth * 0.3), y: Math.floor(customImageLoaded.naturalHeight * 0.4), width: Math.floor(customImageLoaded.naturalWidth * 0.35), height: Math.floor(customImageLoaded.naturalHeight * 0.25) },
+                  details: "Irregular fatigue contour detected. Potential micro-crack or scaling. Recommendation: manual engineering review."
+                }
+              ],
+              recommendations: {
+                urgency: "Manual Inspection Advised",
+                urgencyCode: "WARNING",
+                rul: "350 Operating Hours",
+                actions: [
+                  "Dispatch inspection technician for tactile feeler-gauge tests.",
+                  "Schedule secondary scan with high-frequency ultrasonic probe."
+                ],
+                safety: "Ensure machine is powered off before inspection.",
+                tools: ["Feeler Gauge Set", "Handheld Ultrasonic Inspector"],
+                spareId: "unknown"
+              }
+            };
+            renderAnalysisReport(mockCustomPart);
+          });
+        };
+        customImageLoaded.src = event.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // Actions implementation
+    function dispatchWorkOrder() {
+      if (!activePartId) return;
+      if (activePartId === "custom_upload") {
+        const nameVal = encodeURIComponent(document.getElementById("result-part-name").innerText);
+        const severityVal = document.getElementById("result-status-badge").innerText === "WARNING" ? "High" : "Critical";
+        window.location.href = `maintenance.html?action=schedule&partId=custom_upload&partName=${nameVal}&priority=${severityVal}`;
+      } else {
+        window.location.href = `maintenance.html?action=schedule&partId=${activePartId}`;
+      }
+    }
+
+    function checkSpares() {
+      const db = getSystemDB();
+      const part = db.parts.find(p => p.id === activePartId);
+      if (!part) return;
+      const spareId = part.recommendations.spareId;
+      window.location.href = `inventory.html?search=${spareId}`;
+    }
+
+    function exportInspectionPDF() {
+      showToast("Generating Inspection Report Certificate... PDF compilation started.", "info");
+      setTimeout(() => {
+        showToast("Report VG-CERT-2026-9812 successfully generated and downloaded.", "success");
+      }, 1500);
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VisionGuard AI | Maintenance Planner</title>
+  <meta name="description" content="View AI-generated maintenance recommendations and manage scheduling planner board.">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* Column Kanban board layout */
+    .kanban-board {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.25rem;
+      margin-bottom: 2.5rem;
+    }
+    
+    .kanban-column {
+      background: rgba(10, 13, 22, 0.4);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 1rem;
+      min-height: 400px;
+    }
+    
+    .column-header {
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #94a3b8;
+      border-bottom: 2px solid var(--border-color);
+      padding-bottom: 0.5rem;
+      margin-bottom: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .column-count {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 0.1rem 0.5rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      color: white;
+    }
+    
+    .kanban-cards {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    
+    .wo-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 0.9rem;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    
+    .wo-card:hover, .wo-card.active {
+      border-color: var(--primary);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
+    }
+    
+    .wo-card.active {
+      background: var(--bg-card-hover);
+      border-left: 4px solid var(--primary);
+    }
+    
+    .wo-card.priority-Critical {
+      border-left: 4px solid var(--color-critical);
+    }
+    .wo-card.priority-High {
+      border-left: 4px solid var(--color-warning);
+    }
+    .wo-card.priority-Healthy {
+      border-left: 4px solid var(--color-healthy);
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Premium Navigation Bar -->
+    <nav class="navbar">
+      <a href="index.html" class="nav-brand">
+        <div class="brand-icon">VG</div>
+        <span class="brand-text">VisionGuard AI</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="dashboard.html">AI Scanner</a></li>
+        <li><a href="maintenance.html">Maintenance</a></li>
+        <li><a href="analytics.html">Analytics</a></li>
+        <li><a href="inventory.html">Inventory</a></li>
+        <li><a href="settings.html">Settings</a></li>
+      </ul>
+      <div class="nav-status">
+        <div class="health-badge healthy" id="system-health-badge">
+          <span class="health-dot"></span> System Nominal
+        </div>
+      </div>
+      <button class="nav-toggle" id="nav-toggle-btn" aria-label="Toggle Menu">
+        <span class="bar"></span>
+        <span class="bar"></span>
+        <span class="bar"></span>
+      </button>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <div class="page-header">
+        <div>
+          <h1>AI Maintenance recommendations & Work Orders</h1>
+          <p>Schedule machine operations, review tool checklists, and tag lockout safety protocols</p>
+        </div>
+      </div>
+
+      <!-- Kanban Column Board -->
+      <section class="kanban-board" id="work-orders-board">
+        <!-- Unscheduled Column -->
+        <div class="kanban-column">
+          <div class="column-header">
+            <span>Unscheduled</span>
+            <span class="column-count" id="count-Unscheduled">0</span>
+          </div>
+          <div class="kanban-cards" id="cards-Unscheduled"></div>
+        </div>
+        <!-- Scheduled Column -->
+        <div class="kanban-column">
+          <div class="column-header">
+            <span>Scheduled</span>
+            <span class="column-count" id="count-Scheduled">0</span>
+          </div>
+          <div class="kanban-cards" id="cards-Scheduled"></div>
+        </div>
+        <!-- In Progress Column -->
+        <div class="kanban-column">
+          <div class="column-header">
+            <span>In Progress</span>
+            <span class="column-count" id="count-In-Progress">0</span>
+          </div>
+          <div class="kanban-cards" id="cards-In-Progress"></div>
+        </div>
+        <!-- Completed Column -->
+        <div class="kanban-column">
+          <div class="column-header">
+            <span>Completed</span>
+            <span class="column-count" id="count-Completed">0</span>
+          </div>
+          <div class="kanban-cards" id="cards-Completed"></div>
+        </div>
+      </section>
+
+      <!-- Details & Creator Form Section -->
+      <div class="grid-main-dashboard">
+        
+        <!-- Work Order Resolution Guide Card -->
+        <section class="glass-card" id="resolution-guide-panel">
+          <h2 style="margin-bottom:0.25rem;">AI Dispatch & Safety Guide</h2>
+          <p style="color:#94a3b8; font-size:0.85rem; margin-bottom:1.5rem;" id="resolution-part-subtitle">Select an active work order card above to display execution guidelines.</p>
+          
+          <div id="no-wo-selected-placeholder" style="text-align: center; padding: 3rem 0; color: #64748b;">
+            <span style="font-size: 2.5rem; display:block; margin-bottom: 0.5rem;">🔧</span>
+            <p>No work order active. Select a card to load procedures.</p>
+          </div>
+
+          <div id="wo-details-content" style="display:none;" class="rec-section">
+            
+            <div style="display:flex; justify-content:space-between; align-items:start; border-bottom:1px solid var(--border-color); padding-bottom: 1rem;">
+              <div>
+                <h3 id="detail-part-name" style="font-size: 1.4rem;">Drive Shaft Gear (Spur)</h3>
+                <span style="font-size:0.75rem; color:#94a3b8;" id="detail-wo-id">ID: wo_4001</span>
+              </div>
+              <div style="text-align: right;">
+                <span class="status-pill critical" id="detail-wo-priority">CRITICAL</span>
+                <div style="font-size: 0.8rem; color: #64748b; margin-top: 0.25rem;" id="detail-wo-assigned">Assigned: Team Alpha</div>
+              </div>
+            </div>
+
+            <!-- Urgent safety advisory -->
+            <div class="rec-block" style="border-left: 4px solid var(--color-critical); background: rgba(255, 51, 102, 0.03);" id="safety-alert-block">
+              <div class="rec-label" style="color: var(--color-critical);">Lockout / Safety Advisory</div>
+              <p style="font-size: 0.88rem; font-weight: 500;" id="detail-wo-safety">Ensure main breaker is fully tagged out before opening casing.</p>
+            </div>
+
+            <!-- Execution actions -->
+            <div>
+              <div class="rec-label">Recommended Resolution Protocol</div>
+              <ol class="step-list" id="detail-wo-steps">
+                <!-- Action items -->
+              </ol>
+            </div>
+
+            <!-- Required Tooling tags -->
+            <div>
+              <div class="rec-label">Required Inspection & Service Tooling</div>
+              <div class="tools-container" id="detail-wo-tools">
+                <!-- Tool tags -->
+              </div>
+            </div>
+
+            <!-- Work order state actions selector -->
+            <div style="display:flex; gap:1rem; border-top: 1px solid var(--border-color); padding-top:1.5rem; margin-top:1rem;">
+              <div style="flex:1;">
+                <label style="font-size:0.75rem; text-transform:uppercase; color:#64748b; font-weight:700; display:block; margin-bottom:0.5rem;">Update Work Status</label>
+                <select id="update-status-select" class="form-input" style="width: 100%; background: #0c101d;">
+                  <option value="Unscheduled">Unscheduled</option>
+                  <option value="Scheduled">Scheduled</option>
+                  <option value="In Progress">In Progress</option>
+                  <option value="Completed">Completed</option>
+                </select>
+              </div>
+              <div style="display:flex; align-items:flex-end; gap:0.5rem;">
+                <button class="btn btn-primary" onclick="submitStatusUpdate()" id="btn-save-status">Update State</button>
+                <button class="btn btn-secondary" onclick="checkWOInventory()" id="btn-wo-spares">Order Spare</button>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        <!-- New Manual Work Order Creation -->
+        <section class="glass-card">
+          <h2>Schedule Diagnostics Work Order</h2>
+          <p style="color:#94a3b8; font-size:0.85rem; margin-bottom:1.5rem;">Manually inject a work order scheduled cycle for preventive maintenance routines.</p>
+          
+          <form id="new-wo-form" onsubmit="createNewWorkOrder(event)">
+            <div class="form-group">
+              <label for="wo-asset-name">Component / Asset Name</label>
+              <input type="text" id="wo-asset-name" class="form-input" placeholder="e.g., Hydraulic Pump Piston" required>
+            </div>
+            
+            <div class="grid-2">
+              <div class="form-group">
+                <label for="wo-priority">Priority Level</label>
+                <select id="wo-priority" class="form-input">
+                  <option value="Healthy">Low (Preventive)</option>
+                  <option value="High">High (Warning)</option>
+                  <option value="Critical">Critical (Anomaly)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="wo-technician">Assigned Technician</label>
+                <input type="text" id="wo-technician" class="form-input" placeholder="e.g., Specialist Team B" required>
+              </div>
+            </div>
+
+            <div class="grid-2">
+              <div class="form-group">
+                <label for="wo-date">Target Schedule Date</label>
+                <input type="date" id="wo-date" class="form-input" required>
+              </div>
+              <div class="form-group">
+                <label for="wo-hours">Est. Labor Hours</label>
+                <input type="number" id="wo-hours" class="form-input" step="0.5" placeholder="e.g., 3.5" required>
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;" id="btn-submit-new-wo">
+              Create Work Order
+            </button>
+          </form>
+        </section>
+
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <p>© 2026 VisionGuard Systems Inc. • Plant Inspection Portal</p>
+    </footer>
+  </div>
+
+  <!-- Shared JS imports -->
+  <script src="data.js"></script>
+  <script src="shared.js"></script>
+  
+  <script>
+    let activeWOId = null;
+
+    document.addEventListener("DOMContentLoaded", () => {
+      // Set default date picker limit to today
+      const today = new Date().toISOString().split("T")[0];
+      document.getElementById("wo-date").value = today;
+      document.getElementById("wo-date").min = today;
+      
+      // Load orders board
+      loadWorkOrdersBoard();
+      
+      // Parse Query string if scanner dispatched a scheduler command
+      const urlParams = new URLSearchParams(window.location.search);
+      const action = urlParams.get("action");
+      const partId = urlParams.get("partId");
+      
+      if (action === "schedule" && partId) {
+        // Automatically check if there is an unscheduled work order for this part
+        const db = getSystemDB();
+        const existingWO = db.maintenanceOrders.find(o => o.partId === partId && o.status !== "Completed");
+        
+        if (existingWO) {
+          selectWorkOrder(existingWO.id);
+          showToast(`Loaded maintenance details for scanned asset.`, "info");
+        } else {
+          // If no work order exists (e.g. healthy gear scanned), pre-fill the form
+          const part = db.parts.find(p => p.id === partId);
+          if (part) {
+            document.getElementById("wo-asset-name").value = part.name;
+            document.getElementById("wo-priority").value = part.status === "Healthy" ? "Healthy" : (part.status === "Warning" ? "High" : "Critical");
+            document.getElementById("wo-technician").value = "Team Alpha";
+            showToast("Pre-filled preventive maintenance form.", "info");
+          } else if (partId === "custom_upload") {
+            const customName = urlParams.get("partName") || "Custom Asset";
+            const customPriority = urlParams.get("priority") || "High";
+            document.getElementById("wo-asset-name").value = decodeURIComponent(customName);
+            document.getElementById("wo-priority").value = customPriority;
+            document.getElementById("wo-technician").value = "Team Beta";
+            document.getElementById("wo-hours").value = "4.0";
+            showToast("Pre-filled form with custom anomaly data.", "info");
+          }
+        }
+      }
+    });
+
+    // Populate Kanban Columns
+    function loadWorkOrdersBoard() {
+      const db = getSystemDB();
+      
+      // Clear all lanes
+      const lanes = ["Unscheduled", "Scheduled", "In-Progress", "Completed"];
+      lanes.forEach(lane => {
+        document.getElementById(`cards-${lane}`).innerHTML = "";
+        document.getElementById(`count-${lane}`).innerText = "0";
+      });
+      
+      // Sort and populate
+      db.maintenanceOrders.forEach(wo => {
+        // Map "In Progress" with spacing inside DOM id
+        const domLaneName = wo.status.replace(" ", "-");
+        const laneEl = document.getElementById(`cards-${domLaneName}`);
+        
+        if (laneEl) {
+          const card = document.createElement("div");
+          card.className = `wo-card priority-${wo.priority} ${activeWOId === wo.id ? 'active' : ''}`;
+          card.id = `wo-card-${wo.id}`;
+          card.onclick = () => selectWorkOrder(wo.id);
+          
+          let priorityLabel = wo.priority;
+          if (wo.priority === "Healthy") priorityLabel = "Low";
+          if (wo.priority === "High") priorityLabel = "High";
+          
+          card.innerHTML = `
+            <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom: 0.5rem;">
+              <strong>${wo.partName}</strong>
+              <span class="status-pill ${wo.priority.toLowerCase()}" style="font-size:0.6rem; padding:0.1rem 0.3rem;">${priorityLabel}</span>
+            </div>
+            <div style="font-size:0.75rem; color:#94a3b8; display:flex; justify-content:space-between;">
+              <span>Assignee: ${wo.assignedTo}</span>
+              <span>Labor: ${wo.estimatedHours}h</span>
+            </div>
+          `;
+          laneEl.appendChild(card);
+          
+          // Increment lane counter
+          const counter = document.getElementById(`count-${domLaneName}`);
+          counter.innerText = parseInt(counter.innerText) + 1;
+        }
+      });
+    }
+
+    // Load recommendations details for selected work order
+    function selectWorkOrder(woId) {
+      activeWOId = woId;
+      
+      // Toggle card highlights
+      document.querySelectorAll(".wo-card").forEach(el => el.classList.remove("active"));
+      const selectedCard = document.getElementById(`wo-card-${woId}`);
+      if (selectedCard) selectedCard.classList.add("active");
+      
+      const db = getSystemDB();
+      const wo = db.maintenanceOrders.find(o => o.id === woId);
+      if (!wo) return;
+      
+      // Toggle placeholders
+      document.getElementById("no-wo-selected-placeholder").style.display = "none";
+      document.getElementById("wo-details-content").style.display = "flex";
+      
+      // Fill details text
+      document.getElementById("detail-part-name").innerText = wo.partName;
+      document.getElementById("detail-wo-id").innerText = `Work Order ID: ${wo.id} • Target Date: ${wo.dateScheduled}`;
+      document.getElementById("detail-wo-assigned").innerText = `Assigned: ${wo.assignedTo}`;
+      
+      const priorityLabel = document.getElementById("detail-wo-priority");
+      priorityLabel.className = `status-pill ${wo.priority.toLowerCase()}`;
+      priorityLabel.innerText = wo.priority === "Healthy" ? "LOW" : (wo.priority === "High" ? "HIGH" : "CRITICAL");
+      
+      // Load corresponding recommendations from parts DB (or use defaults for manual WOs)
+      let matchedPart = db.parts.find(p => p.id === wo.partId || p.name === wo.partName);
+      if (!matchedPart) {
+        // Create generic template for manual entries
+        matchedPart = {
+          recommendations: {
+            urgency: wo.priority === "Critical" ? "Immediate action required" : "Preventive check",
+            urgencyCode: wo.priority === "Critical" ? "CRITICAL" : (wo.priority === "High" ? "WARNING" : "HEALTHY"),
+            safety: wo.priority === "Critical" ? "LOTO active warning: High energy hazards." : "Wear standard workshop safety protective gear.",
+            actions: [
+              "Perform visual structural fatigue check.",
+              "Test mounting bolts alignment torque values.",
+              "Record operating temperature under full load cycles.",
+              "Log findings in VisionGuard history panel."
+            ],
+            tools: ["Vibration Probe Pen", "Dial Indicator Alignment Tool", "Laser Thermal Gun"],
+            spareId: "unknown"
+          }
+        };
+      }
+      
+      // Write safety procedures
+      const safetyBlock = document.getElementById("safety-alert-block");
+      const safetyText = document.getElementById("detail-wo-safety");
+      
+      safetyText.innerText = matchedPart.recommendations.safety;
+      
+      if (wo.priority === "Critical") {
+        safetyBlock.style.borderLeftColor = "var(--color-critical)";
+        safetyBlock.style.background = "rgba(255, 51, 102, 0.03)";
+        safetyText.style.color = "var(--color-critical)";
+      } else if (wo.priority === "High") {
+        safetyBlock.style.borderLeftColor = "var(--color-warning)";
+        safetyBlock.style.background = "rgba(255, 170, 0, 0.03)";
+        safetyText.style.color = "var(--color-warning)";
+      } else {
+        safetyBlock.style.borderLeftColor = "var(--color-healthy)";
+        safetyBlock.style.background = "rgba(16, 185, 129, 0.03)";
+        safetyText.style.color = "var(--color-healthy)";
+      }
+      
+      // Populate step list
+      const stepList = document.getElementById("detail-wo-steps");
+      stepList.innerHTML = "";
+      matchedPart.recommendations.actions.forEach(action => {
+        const li = document.createElement("li");
+        li.innerText = action;
+        stepList.appendChild(li);
+      });
+      
+      // Populate tools tag tray
+      const toolsContainer = document.getElementById("detail-wo-tools");
+      toolsContainer.innerHTML = "";
+      matchedPart.recommendations.tools.forEach(tool => {
+        const tag = document.createElement("span");
+        tag.className = "tool-tag";
+        tag.innerText = tool;
+        toolsContainer.appendChild(tag);
+      });
+      
+      // Set active select value
+      document.getElementById("update-status-select").value = wo.status;
+    }
+
+    // Submit Status Kanban Update
+    function submitStatusUpdate() {
+      if (!activeWOId) return;
+      
+      const newStatus = document.getElementById("update-status-select").value;
+      
+      updateDB(db => {
+        const wo = db.maintenanceOrders.find(o => o.id === activeWOId);
+        if (wo) {
+          const oldStatus = wo.status;
+          wo.status = newStatus;
+          
+          // If work order marked completed, resolve part status
+          if (newStatus === "Completed" && oldStatus !== "Completed") {
+            const part = db.parts.find(p => p.id === wo.partId || p.name === wo.partName);
+            if (part) {
+              part.status = "Healthy";
+              part.defects = [];
+              part.recommendations.urgency = "Routine Inspection Only";
+              part.recommendations.urgencyCode = "HEALTHY";
+              part.recommendations.rul = "12,000 Operating Hours";
+              part.recommendations.actions = ["Maintain standard operational loads."];
+            }
+            // Update plant health
+            db.stats.plantHealthIndex = Math.min(100, parseFloat((db.stats.plantHealthIndex + 2.5).toFixed(1)));
+            showToast(`Asset repaired! Plant health rating increased to ${db.stats.plantHealthIndex}%`, "success");
+          } else if (newStatus !== "Completed" && oldStatus === "Completed") {
+            // Re-degrade plant health if reverted
+            db.stats.plantHealthIndex = Math.max(70, parseFloat((db.stats.plantHealthIndex - 2.5).toFixed(1)));
+          }
+        }
+      });
+      
+      // Reload UI
+      loadWorkOrdersBoard();
+      selectWorkOrder(activeWOId);
+      showToast(`Work order status updated to: ${newStatus}`, "success");
+    }
+
+    // Search Spares Redirect
+    function checkWOInventory() {
+      if (!activeWOId) return;
+      const db = getSystemDB();
+      const wo = db.maintenanceOrders.find(o => o.id === activeWOId);
+      if (!wo) return;
+      
+      let matchedPart = db.parts.find(p => p.id === wo.partId || p.name === wo.partName);
+      if (matchedPart && matchedPart.recommendations.spareId !== "unknown") {
+        window.location.href = `inventory.html?search=${matchedPart.recommendations.spareId}`;
+      } else {
+        window.location.href = `inventory.html?category=${matchedPart ? matchedPart.category : ''}`;
+      }
+    }
+
+    // Form submission dispatcher
+    function createNewWorkOrder(e) {
+      e.preventDefault();
+      
+      const name = document.getElementById("wo-asset-name").value;
+      const priority = document.getElementById("wo-priority").value;
+      const tech = document.getElementById("wo-technician").value;
+      const date = document.getElementById("wo-date").value;
+      const hours = parseFloat(document.getElementById("wo-hours").value);
+      
+      const newWOId = `wo_${Math.floor(4000 + Math.random()*9000)}`;
+      
+      updateDB(db => {
+        const newOrder = {
+          id: newWOId,
+          partId: "unknown",
+          partName: name,
+          priority: priority,
+          status: "Scheduled",
+          assignedTo: tech,
+          dateScheduled: date,
+          estimatedHours: hours
+        };
+        db.maintenanceOrders.push(newOrder);
+        
+        // Slightly lower plant index if a critical/high defect is manually recorded
+        if (priority === "Critical") {
+          db.stats.plantHealthIndex = Math.max(75, parseFloat((db.stats.plantHealthIndex - 1.8).toFixed(1)));
+        }
+      });
+      
+      // Reset form fields
+      document.getElementById("new-wo-form").reset();
+      
+      // Refresh board
+      loadWorkOrdersBoard();
+      selectWorkOrder(newWOId);
+      
+      showToast(`Work Order ${newWOId} dispatched for ${name}.`, "success");
+    }
+  </script>
+</body>
+</html>

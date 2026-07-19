@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VisionGuard AI | Machine Part Defect Detection & Maintenance Portal</title>
+  <meta name="description" content="AI-Based Machine Part Defect Detection and Maintenance Recommendation System. Real-time vision detection, predictive maintenance, and scheduling.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Premium Navigation Bar -->
+    <nav class="navbar" id="main-nav">
+      <a href="index.html" class="nav-brand" id="brand-link">
+        <div class="brand-icon">VG</div>
+        <span class="brand-text">VisionGuard AI</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="index.html" id="nav-home">Home</a></li>
+        <li><a href="dashboard.html" id="nav-dashboard">AI Scanner</a></li>
+        <li><a href="maintenance.html" id="nav-maintenance">Maintenance</a></li>
+        <li><a href="analytics.html" id="nav-analytics">Analytics</a></li>
+        <li><a href="inventory.html" id="nav-inventory">Inventory</a></li>
+        <li><a href="settings.html" id="nav-settings">Settings</a></li>
+      </ul>
+      <div class="nav-status">
+        <div class="health-badge healthy" id="system-health-badge">
+          <span class="health-dot"></span> System Nominal
+        </div>
+      </div>
+      <button class="nav-toggle" id="nav-toggle-btn" aria-label="Toggle Menu">
+        <span class="bar"></span>
+        <span class="bar"></span>
+        <span class="bar"></span>
+      </button>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      
+      <!-- Hero Section -->
+      <section class="hero-section" id="hero-portal">
+        <div class="hero-content">
+          <h1 id="hero-title">AI-Powered Machine Defect Detection & Maintenance</h1>
+          <p id="hero-subtitle">Optimize factory floor uptime with automated YOLOv8 visual inspections, real-time bounding-box defect mapping, and instant AI-generated maintenance work orders.</p>
+          <div style="display:flex; gap:1rem;">
+            <a href="dashboard.html" class="btn btn-primary" id="btn-launch-scanner">
+              <span>Launch Scan Center</span> ➔
+            </a>
+            <a href="maintenance.html" class="btn btn-secondary" id="btn-view-schedule">View Active Planner</a>
+          </div>
+        </div>
+        <div class="hero-visual">
+          <div class="hero-glow-sphere"></div>
+          <!-- A beautiful SVG representing industrial AI vision -->
+          <svg width="240" height="240" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" style="z-index:1; filter: drop-shadow(0 0 20px rgba(99,102,241,0.4));">
+            <circle cx="100" cy="100" r="80" stroke="url(#paint0_linear)" stroke-width="6" stroke-dasharray="10 6"/>
+            <path d="M60 100 H140 M100 60 V140" stroke="rgba(0, 240, 255, 0.4)" stroke-width="2"/>
+            <circle cx="100" cy="100" r="40" fill="rgba(99, 102, 241, 0.1)" stroke="var(--primary)" stroke-width="3"/>
+            <rect x="50" y="50" width="100" height="100" stroke="var(--secondary)" stroke-width="1.5" stroke-dasharray="4 4"/>
+            <!-- Scanner lines -->
+            <path d="M40 40 L60 40 M40 40 V60" stroke="var(--secondary)" stroke-width="4" stroke-linecap="round"/>
+            <path d="M160 40 L140 40 M160 40 V60" stroke="var(--secondary)" stroke-width="4" stroke-linecap="round"/>
+            <path d="M40 160 L60 160 M40 160 V140" stroke="var(--secondary)" stroke-width="4" stroke-linecap="round"/>
+            <path d="M160 160 L140 160 M160 160 V140" stroke="var(--secondary)" stroke-width="4" stroke-linecap="round"/>
+            
+            <circle cx="120" cy="80" r="6" fill="#ff3366">
+              <animate attributeName="opacity" values="1;0.2;1" dur="2s" repeatCount="indefinite"/>
+            </circle>
+            
+            <defs>
+              <linearGradient id="paint0_linear" x1="20" y1="20" x2="180" y2="180" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#6366f1"/>
+                <stop offset="1" stop-color="#00f0ff"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+      </section>
+
+      <!-- Key Performance Indicators (KPIs) -->
+      <section class="grid-4" style="margin-bottom: 3rem;" id="kpi-panel">
+        <div class="glass-card" id="kpi-health">
+          <div class="rec-label">Plant Health Index</div>
+          <div class="rec-value" style="font-size: 2.25rem; color: var(--color-healthy);" id="health-index-val">94.2%</div>
+          <p style="color: #64748b; font-size: 0.8rem; margin-top: 0.5rem;">Weighted asset inspection safety factor</p>
+        </div>
+        <div class="glass-card" id="kpi-scans">
+          <div class="rec-label">Total Inspections</div>
+          <div class="rec-value" style="font-size: 2.25rem; color: #ffffff;" id="total-scans-val">1,420</div>
+          <p style="color: #64748b; font-size: 0.8rem; margin-top: 0.5rem;">Completed scans in current cycle</p>
+        </div>
+        <div class="glass-card" id="kpi-alerts">
+          <div class="rec-label">Pending Work Orders</div>
+          <div class="rec-value" style="font-size: 2.25rem; color: var(--color-warning);" id="active-wo-val">3</div>
+          <p style="color: #64748b; font-size: 0.8rem; margin-top: 0.5rem;">Active component interventions</p>
+        </div>
+        <div class="glass-card" id="kpi-mtbf">
+          <div class="rec-label">Mean Time To Repair (MTTR)</div>
+          <div class="rec-value" style="font-size: 2.25rem; color: var(--secondary);" id="mtbf-val">3.8 Hrs</div>
+          <p style="color: #64748b; font-size: 0.8rem; margin-top: 0.5rem;">Average physical replacement turn time</p>
+        </div>
+      </section>
+
+      <!-- Core Operations: Quick Diagnostics & Feed -->
+      <div class="grid-main-dashboard">
+        
+        <!-- Quick Part Selection Box -->
+        <section class="glass-card" id="diagnostic-selector">
+          <h2 style="margin-bottom: 0.5rem;">Quick Inspection Selection</h2>
+          <p style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 1.5rem;">Select one of our preset test assets to run a diagnostics scan inside the AI Scan Center.</p>
+          
+          <div class="grid-3" style="margin-bottom: 2rem;">
+            <!-- Part 1: Defective Gear -->
+            <div class="glass-card" style="padding: 1rem; border-color: rgba(255, 51, 102, 0.2); cursor: pointer; text-align: center;" onclick="selectPartToInspect('gear_defective')" id="part-select-gear-def">
+              <img src="media/gear_defective.jpg" alt="Defective Gear" style="width: 100%; height: 120px; object-fit: cover; border-radius: 8px; margin-bottom: 0.75rem;">
+              <h4 style="font-size: 0.95rem;">Drive Gear (Spur)</h4>
+              <div class="status-pill critical" style="margin-top: 0.5rem; font-size: 0.7rem;">Defects Detected</div>
+            </div>
+            <!-- Part 2: Defective Bearing -->
+            <div class="glass-card" style="padding: 1rem; border-color: rgba(255, 170, 0, 0.2); cursor: pointer; text-align: center;" onclick="selectPartToInspect('bearing_defective')" id="part-select-bearing-def">
+              <img src="media/bearing_defective.jpg" alt="Defective Bearing" style="width: 100%; height: 120px; object-fit: cover; border-radius: 8px; margin-bottom: 0.75rem;">
+              <h4 style="font-size: 0.95rem;">Main Shaft Bearing</h4>
+              <div class="status-pill warning" style="margin-top: 0.5rem; font-size: 0.7rem;">Fatigue Alert</div>
+            </div>
+            <!-- Part 3: Healthy Pinion -->
+            <div class="glass-card" style="padding: 1rem; border-color: rgba(16, 185, 129, 0.2); cursor: pointer; text-align: center;" onclick="selectPartToInspect('gear_healthy')" id="part-select-gear-health">
+              <img src="media/gear_healthy.jpg" alt="Healthy Pinion" style="width: 100%; height: 120px; object-fit: cover; border-radius: 8px; margin-bottom: 0.75rem;">
+              <h4 style="font-size: 0.95rem;">High-Speed Pinion</h4>
+              <div class="status-pill healthy" style="margin-top: 0.5rem; font-size: 0.7rem;">Healthy Status</div>
+            </div>
+          </div>
+
+          <div style="text-align: right;">
+            <button class="btn btn-primary" onclick="proceedToScanner()" id="btn-proceed-scan">Load Selected in Scan Center ➔</button>
+          </div>
+        </section>
+
+        <!-- Recent Inspection Feed -->
+        <section class="glass-card" id="inspection-feed-card">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem;">
+            <h2>Recent Inspection Logs</h2>
+            <a href="analytics.html" style="color:var(--primary); font-size:0.85rem; text-decoration:none; font-weight:600;">View All</a>
+          </div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Part</th>
+                  <th>Severity</th>
+                  <th>Timestamp</th>
+                </tr>
+              </thead>
+              <tbody id="inspections-tbody">
+                <!-- Will be dynamically generated -->
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+      </div>
+
+      <!-- Features Highlights Panel -->
+      <section class="features-container" id="features-highlights">
+        <h2 style="text-align: center;">VisionGuard AI System Features</h2>
+        <p style="text-align: center; color: #94a3b8; max-width: 600px; margin: 0.5rem auto 2rem;">A fully integrated computerized maintenance management system (CMMS) powered by industrial machine learning.</p>
+        <div class="features-grid">
+          <!-- Card 1 -->
+          <div class="glass-card feature-card">
+            <div class="feature-icon-wrapper">👁</div>
+            <h3>YOLOv8 Object Localization</h3>
+            <p>Runs sub-15ms edge inference to map micro-cracks, surface spalling, pit defects, and corrosion rust borders instantly on raw inspection uploads.</p>
+          </div>
+          <!-- Card 2 -->
+          <div class="glass-card feature-card">
+            <div class="feature-icon-wrapper">⚙</div>
+            <h3>RUL Predictive Analytics</h3>
+            <p>Calculates Remaining Useful Life (RUL) using operating temperature curves, historical failure indexes, and vibration spectral analyses.</p>
+          </div>
+          <!-- Card 3 -->
+          <div class="glass-card feature-card">
+            <div class="feature-icon-wrapper">🛠</div>
+            <h3>Automated Work Orders</h3>
+            <p>Instantly compiles maintenance steps, safety guidelines (Lockout/Tagout), required tools list, and cross-references matching warehouse spares.</p>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer" id="main-footer">
+      <p>© 2026 VisionGuard Systems Inc. • Plant Inspection Portal v3.4.2 • Secured via Edge Shield</p>
+    </footer>
+  </div>
+
+  <!-- Shared JavaScript Databases & Handlers -->
+  <script src="data.js"></script>
+  <script src="shared.js"></script>
+  
+  <script>
+    // State management for index portal selection
+    let selectedPartId = "gear_defective";
+
+    function selectPartToInspect(partId) {
+      selectedPartId = partId;
+      
+      // Update highlights in UI
+      document.querySelectorAll("#diagnostic-selector .grid-3 > div").forEach(card => {
+        card.style.borderColor = "rgba(255, 255, 255, 0.05)";
+        card.style.boxShadow = "none";
+      });
+      
+      const selectedCard = document.getElementById(
+        partId === "gear_defective" ? "part-select-gear-def" : 
+        partId === "bearing_defective" ? "part-select-bearing-def" : "part-select-gear-health"
+      );
+      
+      if (selectedCard) {
+        let glowColor = "var(--primary)";
+        if (partId === "gear_defective") glowColor = "var(--color-critical)";
+        if (partId === "bearing_defective") glowColor = "var(--color-warning)";
+        if (partId === "gear_healthy") glowColor = "var(--color-healthy)";
+        
+        selectedCard.style.borderColor = glowColor;
+        selectedCard.style.boxShadow = `0 0 15px ${glowColor}22`;
+      }
+    }
+
+    function proceedToScanner() {
+      // Pass the selected part ID through query parameters
+      window.location.href = `dashboard.html?part=${selectedPartId}`;
+    }
+
+    // Load dynamic data on ready
+    document.addEventListener("DOMContentLoaded", () => {
+      // Highlight initial selected
+      selectPartToInspect("gear_defective");
+      
+      // Fetch state from localStorage
+      const localDB = getSystemDB();
+      
+      // Load KPIs
+      document.getElementById("health-index-val").innerText = `${localDB.stats.plantHealthIndex}%`;
+      document.getElementById("total-scans-val").innerText = localDB.stats.totalScanned.toLocaleString();
+      
+      const pendingWOs = localDB.maintenanceOrders.filter(o => o.status !== "Completed").length;
+      document.getElementById("active-wo-val").innerText = pendingWOs;
+      
+      // Populate Recent Inspection logs
+      const tbody = document.getElementById("inspections-tbody");
+      tbody.innerHTML = "";
+      
+      // Grab top 4 recent logs
+      const recentLogs = localDB.history.slice(0, 4);
+      recentLogs.forEach(log => {
+        const tr = document.createElement("tr");
+        
+        let statusClass = "healthy";
+        if (log.status === "Critical") statusClass = "critical";
+        if (log.status === "Warning") statusClass = "warning";
+        
+        tr.innerHTML = `
+          <td><strong>${log.partName}</strong></td>
+          <td><span class="status-pill ${statusClass}">${log.status}</span></td>
+          <td style="color:#64748b; font-size:0.8rem;">${log.timestamp}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+      
+      // Show system notifications if critical parts remain unresolved
+      const unresolvedCrits = localDB.maintenanceOrders.filter(o => o.priority === "Critical" && o.status !== "Completed").length;
+      if (unresolvedCrits > 0) {
+        setTimeout(() => {
+          showToast(`System Alert: ${unresolvedCrits} critical structural defects require immediate servicing!`, "critical");
+        }, 1000);
+      }
+    });
+  </script>
+</body>
+</html>

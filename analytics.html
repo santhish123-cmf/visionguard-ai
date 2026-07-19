@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VisionGuard AI | Analytics & Reports</title>
+  <meta name="description" content="Review machine defect analytics, inspection history log, and download factory compliance audit report certificates.">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* Analytics layout style overrides */
+    .metric-sparkline {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 1rem;
+    }
+    
+    .chart-container {
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: var(--radius-sm);
+      padding: 1.25rem;
+      border: 1px solid var(--border-color);
+      position: relative;
+    }
+    
+    .svg-chart {
+      width: 100%;
+      height: 220px;
+    }
+    
+    .filter-bar {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      align-items: center;
+    }
+    
+    .pagination-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 1rem;
+      color: #64748b;
+      font-size: 0.85rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Premium Navigation Bar -->
+    <nav class="navbar">
+      <a href="index.html" class="nav-brand">
+        <div class="brand-icon">VG</div>
+        <span class="brand-text">VisionGuard AI</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="dashboard.html">AI Scanner</a></li>
+        <li><a href="maintenance.html">Maintenance</a></li>
+        <li><a href="analytics.html">Analytics</a></li>
+        <li><a href="inventory.html">Inventory</a></li>
+        <li><a href="settings.html">Settings</a></li>
+      </ul>
+      <div class="nav-status">
+        <div class="health-badge healthy" id="system-health-badge">
+          <span class="health-dot"></span> System Nominal
+        </div>
+      </div>
+      <button class="nav-toggle" id="nav-toggle-btn" aria-label="Toggle Menu">
+        <span class="bar"></span>
+        <span class="bar"></span>
+        <span class="bar"></span>
+      </button>
+    </nav>
+
+    <!-- Main Workspace -->
+    <main class="main-content">
+      <div class="page-header">
+        <div>
+          <h1>Factory Analytics & Audits</h1>
+          <p>Review defect propagation statistics, operational costs, and filter system diagnostic histories</p>
+        </div>
+        <div>
+          <button class="btn btn-primary" onclick="openReportExporter()" id="btn-export-audit">Compile Audit Package</button>
+        </div>
+      </div>
+
+      <!-- Analytics High level Cards -->
+      <section class="grid-3" style="margin-bottom: 2rem;">
+        <div class="glass-card">
+          <div class="rec-label">Estimated Downtime Avoided</div>
+          <div class="rec-value" style="font-size: 2.25rem; color: var(--color-healthy);" id="downtime-value-card">124.5 Hours</div>
+          <div class="metric-sparkline">
+            <span style="font-size:0.75rem; color:#64748b;">+12h this week</span>
+            <svg class="sparkline-svg" viewBox="0 0 100 30" style="stroke: var(--color-healthy);">
+              <path d="M0,25 Q15,5 30,20 T60,10 T90,2 Z"/>
+            </svg>
+          </div>
+        </div>
+        
+        <div class="glass-card">
+          <div class="rec-label">Inspection Precision Rating</div>
+          <div class="rec-value" style="font-size: 2.25rem; color: var(--secondary);">96.8% Precision</div>
+          <div class="metric-sparkline">
+            <span style="font-size:0.75rem; color:#64748b;">Active YOLO Model validation</span>
+            <svg class="sparkline-svg" viewBox="0 0 100 30" style="stroke: var(--secondary);">
+              <path d="M0,15 L15,14 L30,12 L45,15 L60,10 L75,8 L90,6 L100,5"/>
+            </svg>
+          </div>
+        </div>
+
+        <div class="glass-card">
+          <div class="rec-label">Defect Maintenance Cost</div>
+          <div class="rec-value" style="font-size: 2.25rem; color: var(--color-warning);" id="cost-value-card">$5,470 USD</div>
+          <div class="metric-sparkline">
+            <span style="font-size:0.75rem; color:#64748b;">Total parts replacement cycle cost</span>
+            <svg class="sparkline-svg" viewBox="0 0 100 30" style="stroke: var(--color-warning);">
+              <path d="M0,28 L15,22 L30,25 L45,18 L60,15 L75,8 L90,12 L100,4"/>
+            </svg>
+          </div>
+        </div>
+      </section>
+
+      <!-- Grid Charts -->
+      <section class="grid-2" style="margin-bottom: 2.5rem;">
+        
+        <!-- Chart 1: Defect Trends Line Graph -->
+        <div class="glass-card">
+          <h3 style="margin-bottom: 1rem; font-size: 1.1rem;">Defect Detections Trend (Last 7 Days)</h3>
+          <div class="chart-container">
+            <svg class="svg-chart" viewBox="0 0 500 200" preserveAspectRatio="none">
+              <!-- Grid lines -->
+              <line x1="40" y1="20" x2="480" y2="20" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+              <line x1="40" y1="70" x2="480" y2="70" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+              <line x1="40" y1="120" x2="480" y2="120" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+              <line x1="40" y1="170" x2="480" y2="170" stroke="rgba(255,255,255,0.1)" stroke-width="1.5"/>
+              
+              <!-- Data path (Glow) -->
+              <path id="trend-glow-path" d="M40,150 L113,110 L186,140 L259,115 L332,80 L405,95 L480,110" stroke="var(--primary)" stroke-width="6" fill="none" opacity="0.3" style="filter: blur(4px);"/>
+              <!-- Data path main -->
+              <path id="trend-main-path" d="M40,150 L113,110 L186,140 L259,115 L332,80 L405,95 L480,110" stroke="var(--primary)" stroke-width="3" fill="none"/>
+              
+              <!-- Dots on peaks -->
+              <g id="trend-points-group">
+                <circle cx="40" cy="150" r="4" fill="var(--secondary)"/>
+                <circle cx="113" cy="110" r="4" fill="var(--secondary)"/>
+                <circle cx="186" cy="140" r="4" fill="var(--secondary)"/>
+                <circle cx="259" cy="115" r="4" fill="var(--secondary)"/>
+                <circle cx="332" cy="80" r="4" fill="var(--secondary)"/>
+                <circle cx="405" cy="95" r="4" fill="var(--secondary)"/>
+                <circle cx="480" cy="110" r="4" fill="var(--secondary)"/>
+              </g>
+              
+              <!-- Labels -->
+              <text x="40" y="190" fill="#64748b" font-size="9" text-anchor="middle">Mon</text>
+              <text x="113" y="190" fill="#64748b" font-size="9" text-anchor="middle">Tue</text>
+              <text x="186" y="190" fill="#64748b" font-size="9" text-anchor="middle">Wed</text>
+              <text x="259" y="190" fill="#64748b" font-size="9" text-anchor="middle">Thu</text>
+              <text x="332" y="190" fill="#64748b" font-size="9" text-anchor="middle">Fri</text>
+              <text x="405" y="190" fill="#64748b" font-size="9" text-anchor="middle">Sat</text>
+              <text x="480" y="190" fill="#64748b" font-size="9" text-anchor="middle">Sun</text>
+              
+              <text x="25" y="24" fill="#64748b" font-size="9" text-anchor="end">40</text>
+              <text x="25" y="74" fill="#64748b" font-size="9" text-anchor="end">20</text>
+              <text x="25" y="124" fill="#64748b" font-size="9" text-anchor="end">10</text>
+              <text x="25" y="174" fill="#64748b" font-size="9" text-anchor="end">0</text>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Chart 2: Defect types distribution -->
+        <div class="glass-card">
+          <h3 style="margin-bottom: 1rem; font-size: 1.1rem;">Asset Health Index Allocation</h3>
+          <div class="chart-container">
+            <svg class="svg-chart" viewBox="0 0 500 200" preserveAspectRatio="none">
+              <!-- Radial distribution bars -->
+              <!-- Gears (84% safe) -->
+              <text x="40" y="45" fill="#e2e8f0" font-size="11" font-weight="600">Gears Assembly</text>
+              <rect x="180" y="35" width="260" height="12" fill="rgba(255,255,255,0.05)" rx="6"/>
+              <rect id="bar-gears" x="180" y="35" width="220" height="12" fill="var(--color-healthy)" rx="6"/>
+              <text id="lbl-gears" x="460" y="45" fill="var(--color-healthy)" font-size="11" font-weight="700">84.6%</text>
+ 
+              <!-- Bearings (91% safe) -->
+              <text x="40" y="95" fill="#e2e8f0" font-size="11" font-weight="600">Main Bearings</text>
+              <rect x="180" y="85" width="260" height="12" fill="rgba(255,255,255,0.05)" rx="6"/>
+              <rect id="bar-bearings" x="180" y="85" width="236" height="12" fill="var(--secondary)" rx="6"/>
+              <text id="lbl-bearings" x="460" y="95" fill="var(--secondary)" font-size="11" font-weight="700">91.2%</text>
+ 
+              <!-- Hydraulics (72% safe) -->
+              <text x="40" y="145" fill="#e2e8f0" font-size="11" font-weight="600">Hydraulic Seals</text>
+              <rect x="180" y="135" width="260" height="12" fill="rgba(255,255,255,0.05)" rx="6"/>
+              <rect id="bar-hydraulics" x="180" y="135" width="182" height="12" fill="var(--color-warning)" rx="6"/>
+              <text id="lbl-hydraulics" x="460" y="145" fill="var(--color-warning)" font-size="11" font-weight="700">72.0%</text>
+            </svg>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- History database table Card -->
+      <section class="glass-card" style="margin-bottom: 2rem;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+          <h2>Inspection Database Archives</h2>
+          <span style="color:#64748b; font-size:0.85rem;" id="total-logs-count">7 entries listed</span>
+        </div>
+
+        <!-- Filter bar -->
+        <div class="filter-bar">
+          <input type="text" id="search-input" class="form-input" style="flex:1;" placeholder="Search by part name or defect type..." oninput="filterHistoryLogs()">
+          
+          <select id="status-filter" class="form-input" style="width: 180px;" onchange="filterHistoryLogs()">
+            <option value="All">All Statuses</option>
+            <option value="Critical">Critical</option>
+            <option value="Warning">Warning</option>
+            <option value="Healthy">Healthy</option>
+          </select>
+          
+          <button class="btn btn-secondary" onclick="resetFilters()">Reset</button>
+        </div>
+
+        <!-- Table -->
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Inspection ID</th>
+                <th>Part / Component</th>
+                <th>Status</th>
+                <th>Localized Defect</th>
+                <th>Inspector Agent</th>
+                <th>Timestamp</th>
+              </tr>
+            </thead>
+            <tbody id="history-logs-tbody">
+              <!-- Dynamically populated from localStorage DB -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination bar -->
+        <div class="pagination-bar">
+          <span id="page-indicator">Showing 1-7 of 7 logs</span>
+          <div style="display:flex; gap:0.5rem;">
+            <button class="btn btn-secondary" style="padding:0.4rem 0.8rem; font-size:0.8rem;" disabled>◀ Previous</button>
+            <button class="btn btn-secondary" style="padding:0.4rem 0.8rem; font-size:0.8rem;" disabled>Next ▶</button>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Exporter Modal Overlay -->
+    <div id="exporter-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(10,13,22,0.85); z-index:1000; align-items:center; justify-content:center;">
+      <div class="glass-card" style="width:500px; padding:2rem; border-color:var(--primary); position:relative;">
+        <h2 style="margin-bottom:0.5rem;">Compile Plant Audit Package</h2>
+        <p style="color:#94a3b8; font-size:0.85rem; margin-bottom:1.5rem;">Select report metrics to wrap into a signed factory compliance audit package.</p>
+        
+        <form onsubmit="executeComplianceExport(event)">
+          <div class="form-group">
+            <label for="exp-range">Select Audit Range</label>
+            <select id="exp-range" class="form-input">
+              <option value="7">Last 7 Days (Standard Cycle)</option>
+              <option value="30">Last 30 Days (Monthly Compliance)</option>
+              <option value="90">Last 90 Days (Quarterly Audit)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="exp-sign">Signing Inspector Name</label>
+            <input type="text" id="exp-sign" class="form-input" placeholder="e.g., Inspector John Doe" required>
+          </div>
+
+          <div class="form-group" style="flex-direction:row; justify-content:space-between; align-items:center; margin-top:1rem;">
+            <label for="exp-attach" style="cursor:pointer;">Include High-Res Defect Photos</label>
+            <label class="switch">
+              <input type="checkbox" id="exp-attach" checked>
+              <span class="slider-toggle"></span>
+            </label>
+          </div>
+
+          <div style="display:flex; gap:1rem; margin-top:2rem;">
+            <button type="button" class="btn btn-secondary" style="flex:1;" onclick="closeReportExporter()">Cancel</button>
+            <button type="submit" class="btn btn-primary" style="flex:1.5;">Generate Signed PDF</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <p>© 2026 VisionGuard Systems Inc. • Plant Inspection Portal</p>
+    </footer>
+  </div>
+
+  <!-- Shared JS dependencies -->
+  <script src="data.js"></script>
+  <script src="shared.js"></script>
+  
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      // Load History Log entries
+      populateHistoryTable();
+      
+      // Calculate dynamic stats and redraw charts
+      renderDynamicStats();
+    });
+
+    function renderDynamicStats() {
+      const db = getSystemDB();
+      
+      // 1. Calculate Downtime Avoided: base of 12.5h + 40h for completed Critical, 12h for completed High priority WOs
+      const completedWOs = db.maintenanceOrders.filter(o => o.status === "Completed");
+      const critRepairs = completedWOs.filter(o => o.priority === "Critical").length;
+      const warningRepairs = completedWOs.filter(o => o.priority === "High" || o.priority === "Warning").length;
+      const downtimeAvoided = (critRepairs * 40) + (warningRepairs * 12) + 12.5;
+      
+      const downtimeCard = document.getElementById("downtime-value-card");
+      if (downtimeCard) downtimeCard.innerText = `${downtimeAvoided} Hours`;
+      
+      // 2. Calculate Total Cost: sum of cost in history
+      const totalCost = db.history.reduce((acc, curr) => acc + (curr.cost || 0), 0);
+      const costCard = document.getElementById("cost-value-card");
+      if (costCard) costCard.innerText = `$${totalCost.toLocaleString()} USD`;
+      
+      // 3. Update Asset Health allocation from actual parts lists
+      const gearParts = db.parts.filter(p => p.category === "Gears");
+      const bearingParts = db.parts.filter(p => p.category === "Bearings");
+      
+      function calcCategoryHealth(partsList, fallbackVal) {
+        if (partsList.length === 0) return fallbackVal;
+        const total = partsList.reduce((acc, part) => {
+          if (part.status === "Healthy") return acc + 100;
+          if (part.status === "Warning") return acc + 70;
+          return acc + 20; // Critical
+        }, 0);
+        return parseFloat((total / partsList.length).toFixed(1));
+      }
+      
+      const gearsHealth = calcCategoryHealth(gearParts, 84.6);
+      const bearingsHealth = calcCategoryHealth(bearingParts, 91.2);
+      const hydraulicsHealth = 72.0; // Static fallback
+      
+      updateHealthBar("bar-gears", "lbl-gears", gearsHealth, "var(--color-healthy)");
+      updateHealthBar("bar-bearings", "lbl-bearings", bearingsHealth, "var(--secondary)");
+      updateHealthBar("bar-hydraulics", "lbl-hydraulics", hydraulicsHealth, "var(--color-warning)");
+      
+      // 4. Draw Line Graph based on actual logs by day
+      drawLineChart(db.history);
+    }
+
+    function updateHealthBar(rectId, textId, pct, color) {
+      const rect = document.getElementById(rectId);
+      const label = document.getElementById(textId);
+      if (rect && label) {
+        const width = (pct / 100) * 260; // Max width is 260px
+        rect.setAttribute("width", width);
+        rect.setAttribute("fill", pct < 50 ? "var(--color-critical)" : (pct < 80 ? "var(--color-warning)" : color));
+        label.innerText = `${pct}%`;
+        label.setAttribute("fill", pct < 50 ? "var(--color-critical)" : (pct < 80 ? "var(--color-warning)" : color));
+      }
+    }
+
+    function drawLineChart(history) {
+      const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+      const counts = { Mon: 0, Tue: 0, Wed: 0, Thu: 0, Fri: 0, Sat: 0, Sun: 0 };
+      
+      // Count defects in history (status !== Healthy)
+      history.forEach(log => {
+        if (log.status !== "Healthy") {
+          // Parse timestamp format "2026-07-19 14:32" -> split and parse
+          const dateParts = log.timestamp.split(" ")[0].split("-");
+          const date = new Date(parseInt(dateParts[0]), parseInt(dateParts[1]) - 1, parseInt(dateParts[2]));
+          const dayName = days[date.getDay()];
+          if (counts[dayName] !== undefined) {
+            counts[dayName]++;
+          }
+        }
+      });
+      
+      // Standard base simulation padding so graph isn't blank
+      counts.Mon += 1;
+      counts.Tue += 2;
+      counts.Wed += 1;
+      counts.Thu += 1;
+      counts.Fri += 2;
+      counts.Sat += 0;
+      
+      // Map counts to y coordinates: max count = 5. 0 defects maps to y=170, 5 defects maps to y=30
+      function countToY(count) {
+        const capped = Math.min(5, count);
+        return 170 - (capped / 5) * 140;
+      }
+      
+      const xCoords = [40, 113, 186, 259, 332, 405, 480];
+      const dayKeys = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+      const points = dayKeys.map((day, idx) => {
+        return { x: xCoords[idx], y: countToY(counts[day]) };
+      });
+      
+      let pathD = `M ${points[0].x},${points[0].y}`;
+      for (let i = 1; i < points.length; i++) {
+        pathD += ` L ${points[i].x},${points[i].y}`;
+      }
+      
+      const mainPath = document.getElementById("trend-main-path");
+      const glowPath = document.getElementById("trend-glow-path");
+      if (mainPath && glowPath) {
+        mainPath.setAttribute("d", pathD);
+        glowPath.setAttribute("d", pathD);
+      }
+      
+      // Render dots
+      const dotsGroup = document.getElementById("trend-points-group");
+      if (dotsGroup) {
+        dotsGroup.innerHTML = "";
+        points.forEach(p => {
+          const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+          circle.setAttribute("cx", p.x);
+          circle.setAttribute("cy", p.y);
+          circle.setAttribute("r", 4);
+          circle.setAttribute("fill", "var(--secondary)");
+          dotsGroup.appendChild(circle);
+        });
+      }
+    }
+
+    function populateHistoryTable() {
+      const db = getSystemDB();
+      const tbody = document.getElementById("history-logs-tbody");
+      tbody.innerHTML = "";
+      
+      db.history.forEach(log => {
+        const tr = document.createElement("tr");
+        tr.className = `log-row status-row-${log.status}`;
+        
+        let badgeClass = "healthy";
+        if (log.status === "Critical") badgeClass = "critical";
+        if (log.status === "Warning") badgeClass = "warning";
+        
+        tr.innerHTML = `
+          <td><code style="color:var(--secondary);">${log.id}</code></td>
+          <td><strong>${log.partName}</strong></td>
+          <td><span class="status-pill ${badgeClass}">${log.status}</span></td>
+          <td>${log.defectType}</td>
+          <td>${log.inspector}</td>
+          <td style="color:#94a3b8; font-size:0.85rem;">${log.timestamp}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+      
+      document.getElementById("total-logs-count").innerText = `${db.history.length} entries listed`;
+      document.getElementById("page-indicator").innerText = `Showing 1-${db.history.length} of ${db.history.length} logs`;
+    }
+
+    // Interactive logs filtering
+    function filterHistoryLogs() {
+      const query = document.getElementById("search-input").value.toLowerCase();
+      const statusFilter = document.getElementById("status-filter").value;
+      const rows = document.querySelectorAll("#history-logs-tbody tr");
+      
+      let visibleCount = 0;
+      
+      rows.forEach(row => {
+        const nameCell = row.cells[1].innerText.toLowerCase();
+        const defectCell = row.cells[3].innerText.toLowerCase();
+        const statusCell = row.cells[2].innerText;
+        
+        const matchesQuery = nameCell.includes(query) || defectCell.includes(query);
+        const matchesStatus = (statusFilter === "All") || (statusCell === statusFilter);
+        
+        if (matchesQuery && matchesStatus) {
+          row.style.display = "";
+          visibleCount++;
+        } else {
+          row.style.display = "none";
+        }
+      });
+      
+      document.getElementById("total-logs-count").innerText = `${visibleCount} match(es) found`;
+      document.getElementById("page-indicator").innerText = `Showing ${visibleCount} of ${rows.length} logs`;
+    }
+
+    function resetFilters() {
+      document.getElementById("search-input").value = "";
+      document.getElementById("status-filter").value = "All";
+      filterHistoryLogs();
+      showToast("Filters successfully reset.", "info");
+    }
+
+    // Modal Exporter controller
+    function openReportExporter() {
+      const modal = document.getElementById("exporter-modal");
+      modal.style.display = "flex";
+    }
+
+    function closeReportExporter() {
+      const modal = document.getElementById("exporter-modal");
+      modal.style.display = "none";
+    }
+
+    function executeComplianceExport(e) {
+      e.preventDefault();
+      
+      const rangeDays = document.getElementById("exp-range").value;
+      const inspectorName = document.getElementById("exp-sign").value;
+      
+      closeReportExporter();
+      showToast(`Compiling ${rangeDays}-day compliance audit report for inspector ${inspectorName}...`, "info");
+      
+      setTimeout(() => {
+        showToast(`Audit certificate successfully signed and compiled! Compliance verified.`, "success");
+      }, 2000);
+    }
+  </script>
+</body>
+</html>

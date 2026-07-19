@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VisionGuard AI | Warehouse Spares Inventory</title>
+  <meta name="description" content="Manage spare parts inventory, check component compatibility, and auto-replenish stock.">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* Specific inventory badge overrides */
+    .inv-alert-badge {
+      font-size: 0.75rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+    .inv-alert-badge.in-stock {
+      background: rgba(16, 185, 129, 0.1);
+      color: var(--color-healthy);
+      border: 1px solid var(--color-healthy);
+    }
+    .inv-alert-badge.low-stock {
+      background: rgba(255, 170, 0, 0.1);
+      color: var(--color-warning);
+      border: 1px solid var(--color-warning);
+    }
+    .inv-alert-badge.out-of-stock {
+      background: rgba(255, 51, 102, 0.1);
+      color: var(--color-critical);
+      border: 1px solid var(--color-critical);
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Premium Navigation Bar -->
+    <nav class="navbar">
+      <a href="index.html" class="nav-brand">
+        <div class="brand-icon">VG</div>
+        <span class="brand-text">VisionGuard AI</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="dashboard.html">AI Scanner</a></li>
+        <li><a href="maintenance.html">Maintenance</a></li>
+        <li><a href="analytics.html">Analytics</a></li>
+        <li><a href="inventory.html">Inventory</a></li>
+        <li><a href="settings.html">Settings</a></li>
+      </ul>
+      <div class="nav-status">
+        <div class="health-badge healthy" id="system-health-badge">
+          <span class="health-dot"></span> System Nominal
+        </div>
+      </div>
+      <button class="nav-toggle" id="nav-toggle-btn" aria-label="Toggle Menu">
+        <span class="bar"></span>
+        <span class="bar"></span>
+        <span class="bar"></span>
+      </button>
+    </nav>
+
+    <!-- Main Workspace -->
+    <main class="main-content">
+      <div class="page-header">
+        <div>
+          <h1>Warehouse Spares Inventory</h1>
+          <p>Verify machine part compatibility, monitor safety margins, and auto-dispatch stock orders</p>
+        </div>
+      </div>
+
+      <!-- Spares stats grid -->
+      <section class="grid-4" style="margin-bottom: 2rem;">
+        <div class="glass-card">
+          <div class="rec-label">Total Unique Items</div>
+          <div class="rec-value" id="inv-unique-items">5 Components</div>
+        </div>
+        <div class="glass-card">
+          <div class="rec-label">Total In-Stock Units</div>
+          <div class="rec-value" id="inv-total-units">54 Units</div>
+        </div>
+        <div class="glass-card">
+          <div class="rec-label">Low Stock Alerts</div>
+          <div class="rec-value" style="color: var(--color-warning);" id="inv-low-alerts">1 Item</div>
+        </div>
+        <div class="glass-card">
+          <div class="rec-label">Out of Stock Items</div>
+          <div class="rec-value" style="color: var(--color-critical);" id="inv-out-alerts">1 Item</div>
+        </div>
+      </section>
+
+      <div class="grid-main-dashboard">
+        
+        <!-- Inventory Table Card -->
+        <div class="glass-card" style="padding:1.5rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+            <h2>Spares Catalog</h2>
+            <div style="display:flex; gap:0.5rem; align-items:center;">
+              <input type="text" id="inv-search" class="form-input" style="padding:0.4rem 0.8rem; font-size:0.85rem; width:200px;" placeholder="Filter by name..." oninput="filterInventoryTable()">
+              <button class="btn btn-secondary" style="padding:0.4rem 0.8rem; font-size:0.8rem;" onclick="resetInventorySearch()">Clear</button>
+            </div>
+          </div>
+          
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Spare Part ID</th>
+                  <th>Part Name</th>
+                  <th>Category</th>
+                  <th>Stock Levels</th>
+                  <th>Price</th>
+                  <th>Location</th>
+                  <th>Status</th>
+                  <th>Quick Order</th>
+                </tr>
+              </thead>
+              <tbody id="inventory-tbody">
+                <!-- Dynamically written from localStorage DB -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Right Side: Compatibility Matcher & Creator Form -->
+        <div style="display:flex; flex-direction:column; gap:1.75rem;">
+          
+          <!-- Compatibility Checker -->
+          <div class="glass-card">
+            <h2>Compatibility Matcher</h2>
+            <p style="color:#94a3b8; font-size:0.85rem; margin-bottom:1.25rem;">Validate warehouse replacement parts compatibility with active production assembly lines.</p>
+            
+            <div class="form-group">
+              <label for="compat-select-part">Select Warehoused Component</label>
+              <select id="compat-select-part" class="form-input" onchange="runCompatibilityCheck()">
+                <!-- Populated dynamically -->
+              </select>
+            </div>
+
+            <div class="rec-block" style="background: rgba(0, 0, 0, 0.2); margin-top: 1rem;" id="compat-results-card">
+              <div class="rec-label">Compatibility Specifications</div>
+              <div style="display:flex; flex-direction:column; gap:0.5rem; font-size:0.88rem; margin-top:0.5rem;">
+                <div><span style="color:#64748b;">Compatible Systems:</span> <strong id="spec-compat">Drive Shaft Line A/B</strong></div>
+                <div><span style="color:#64748b;">Aisle Location:</span> <strong id="spec-location">Aisle 4, Shelf C</strong></div>
+                <div><span style="color:#64748b;">Warehouse Safety Min:</span> <strong id="spec-min">2 units</strong></div>
+                <div><span style="color:#64748b;">Active Demands:</span> <strong id="spec-orders" style="color:var(--color-warning);">No pending tasks</strong></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Add Spare Part Drawer Form -->
+          <div class="glass-card">
+            <h2>Register Spare Part</h2>
+            <p style="color:#94a3b8; font-size:0.85rem; margin-bottom:1.25rem;">Register a newly stored assembly category into the VisionGuard CMMS index.</p>
+            
+            <form id="new-spare-form" onsubmit="addSparePartItem(event)">
+              <div class="form-group">
+                <label for="part-name">Part Name</label>
+                <input type="text" id="part-name" class="form-input" placeholder="e.g., Compression Spring CS-11" required>
+              </div>
+
+              <div class="grid-2">
+                <div class="form-group">
+                  <label for="part-cat">Category</label>
+                  <select id="part-cat" class="form-input">
+                    <option value="Gears">Gears</option>
+                    <option value="Bearings">Bearings</option>
+                    <option value="Seals">Seals</option>
+                    <option value="Hydraulics">Hydraulics</option>
+                    <option value="Electrical">Electrical</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="part-price">Unit Cost ($)</label>
+                  <input type="number" id="part-price" class="form-input" step="0.01" placeholder="e.g., 45.00" required>
+                </div>
+              </div>
+
+              <div class="grid-2">
+                <div class="form-group">
+                  <label for="part-stock">Stock Count</label>
+                  <input type="number" id="part-stock" class="form-input" placeholder="e.g., 4" required>
+                </div>
+                <div class="form-group">
+                  <label for="part-min">Safety Min</label>
+                  <input type="number" id="part-min" class="form-input" placeholder="e.g., 2" required>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="part-location">Aisle / Bin Location</label>
+                <input type="text" id="part-location" class="form-input" placeholder="e.g., Aisle 7, Shelf B" required>
+              </div>
+
+              <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;" id="btn-add-spare">Add Spare Item</button>
+            </form>
+          </div>
+
+        </div>
+
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <p>© 2026 VisionGuard Systems Inc. • Plant Inspection Portal</p>
+    </footer>
+  </div>
+
+  <!-- Shared JS dependencies -->
+  <script src="data.js"></script>
+  <script src="shared.js"></script>
+  
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      // Draw Table
+      loadInventoryCatalog();
+      
+      // Parse Query search parameters
+      const urlParams = new URLSearchParams(window.location.search);
+      const searchParam = urlParams.get("search");
+      
+      if (searchParam) {
+        document.getElementById("inv-search").value = searchParam;
+        filterInventoryTable();
+        
+        // Highlight in compatibility check dropdown
+        const compatDropdown = document.getElementById("compat-select-part");
+        compatDropdown.value = searchParam;
+        runCompatibilityCheck();
+        
+        showToast("Auto-highlighted compatibility match for maintenance order.", "info");
+      }
+    });
+
+    // Populate Catalog table
+    function loadInventoryCatalog() {
+      const db = getSystemDB();
+      const tbody = document.getElementById("inventory-tbody");
+      tbody.innerHTML = "";
+      
+      // Update KPIs
+      document.getElementById("inv-unique-items").innerText = `${db.inventory.length} Components`;
+      
+      const totalUnits = db.inventory.reduce((acc, curr) => acc + curr.stock, 0);
+      document.getElementById("inv-total-units").innerText = `${totalUnits} Units`;
+      
+      const lowStockCount = db.inventory.filter(i => i.stock > 0 && i.stock <= i.minStock).length;
+      document.getElementById("inv-low-alerts").innerText = `${lowStockCount} Item${lowStockCount === 1 ? '' : 's'}`;
+      
+      const outStockCount = db.inventory.filter(i => i.stock === 0).length;
+      document.getElementById("inv-out-alerts").innerText = `${outStockCount} Item${outStockCount === 1 ? '' : 's'}`;
+      
+      // Load dropdown items
+      const dropdown = document.getElementById("compat-select-part");
+      dropdown.innerHTML = "";
+      
+      db.inventory.forEach(item => {
+        const tr = document.createElement("tr");
+        
+        let statusBadgeClass = "in-stock";
+        let statusText = "In Stock";
+        
+        if (item.stock === 0) {
+          statusBadgeClass = "out-of-stock";
+          statusText = "Out of Stock";
+        } else if (item.stock <= item.minStock) {
+          statusBadgeClass = "low-stock";
+          statusText = "Low Stock";
+        }
+        
+        tr.innerHTML = `
+          <td><code style="color:var(--secondary);">${item.id}</code></td>
+          <td><strong>${item.name}</strong></td>
+          <td>${item.category}</td>
+          <td><strong>${item.stock}</strong> <span style="color:#64748b; font-size:0.75rem;">/ min ${item.minStock}</span></td>
+          <td>$${item.price.toFixed(2)}</td>
+          <td style="color:#94a3b8; font-size:0.85rem;">${item.location}</td>
+          <td><span class="inv-alert-badge ${statusBadgeClass}">${statusText}</span></td>
+          <td>
+            <button class="btn btn-secondary" style="padding:0.25rem 0.5rem; font-size:0.75rem;" onclick="restockSpare('${item.id}', 5)">+5 Units</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+        
+        // Add option to dropdown
+        const opt = document.createElement("option");
+        opt.value = item.id;
+        opt.innerText = item.name;
+        dropdown.appendChild(opt);
+      });
+      
+      // Auto run first compat check
+      runCompatibilityCheck();
+    }
+
+    // Trigger restocking event (+5 units)
+    function restockSpare(itemId, amount) {
+      updateDB(db => {
+        const item = db.inventory.find(i => i.id === itemId);
+        if (item) {
+          item.stock += amount;
+          // Resolve stock status
+          if (item.stock > item.minStock) {
+            item.status = "In Stock";
+          } else {
+            item.status = "Low Stock Alert";
+          }
+          
+          showToast(`Reorder successful. Added +${amount} units to stock of ${item.name}`, "success");
+        }
+      });
+      
+      // Reload page state
+      loadInventoryCatalog();
+    }
+
+    // Check Compatibility Card
+    function runCompatibilityCheck() {
+      const selectedId = document.getElementById("compat-select-part").value;
+      if (!selectedId) return;
+      
+      const db = getSystemDB();
+      const item = db.inventory.find(i => i.id === selectedId);
+      if (!item) return;
+      
+      document.getElementById("spec-compat").innerText = item.compatibility || "General Gearbox Assemblies";
+      document.getElementById("spec-location").innerText = item.location;
+      document.getElementById("spec-min").innerText = `${item.minStock} units`;
+      
+      // Check active work orders requesting this spare ID
+      const demands = db.maintenanceOrders.filter(wo => {
+        const matchedPart = db.parts.find(p => p.id === wo.partId);
+        return matchedPart && matchedPart.recommendations.spareId === selectedId && wo.status !== "Completed";
+      });
+      
+      const demandLabel = document.getElementById("spec-orders");
+      if (demands.length > 0) {
+        demandLabel.style.color = "var(--color-critical)";
+        demandLabel.innerText = `${demands.length} active demand(s) - e.g. WO ${demands[0].id}`;
+      } else {
+        demandLabel.style.color = "var(--color-healthy)";
+        demandLabel.innerText = "No active maintenance demands";
+      }
+    }
+
+    // Filter Table Search
+    function filterInventoryTable() {
+      const query = document.getElementById("inv-search").value.toLowerCase();
+      const rows = document.querySelectorAll("#inventory-tbody tr");
+      
+      rows.forEach(row => {
+        const nameCell = row.cells[1].innerText.toLowerCase();
+        const idCell = row.cells[0].innerText.toLowerCase();
+        
+        if (nameCell.includes(query) || idCell.includes(query)) {
+          row.style.display = "";
+        } else {
+          row.style.display = "none";
+        }
+      });
+    }
+
+    function resetInventorySearch() {
+      document.getElementById("inv-search").value = "";
+      filterInventoryTable();
+      showToast("Inventory filter cleared.", "info");
+    }
+
+    // Add Spare Part Action
+    function addSparePartItem(e) {
+      e.preventDefault();
+      
+      const name = document.getElementById("part-name").value;
+      const cat = document.getElementById("part-cat").value;
+      const price = parseFloat(document.getElementById("part-price").value);
+      const stock = parseInt(document.getElementById("part-stock").value);
+      const min = parseInt(document.getElementById("part-min").value);
+      const location = document.getElementById("part-location").value;
+      
+      const newPartId = `part_${cat.toLowerCase().slice(0, 3)}_${Math.floor(1000 + Math.random()*9000)}`;
+      
+      updateDB(db => {
+        const newItem = {
+          id: newPartId,
+          name: name,
+          category: cat,
+          stock: stock,
+          minStock: min,
+          price: price,
+          location: location,
+          compatibility: "General industrial hardware compatible",
+          status: stock === 0 ? "Out of Stock" : (stock <= min ? "Low Stock Alert" : "In Stock")
+        };
+        db.inventory.push(newItem);
+      });
+      
+      // Clear Form
+      document.getElementById("new-spare-form").reset();
+      
+      // Reload UI
+      loadInventoryCatalog();
+      showToast(`Registered spare component ${newPartId}.`, "success");
+    }
+  </script>
+</body>
+</html>

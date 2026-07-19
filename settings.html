@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VisionGuard AI | System Settings & Models</title>
+  <meta name="description" content="Configure AI defect detection confidence limits, select YOLO/ResNet models, and set compliance notifications.">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* Radio style settings selectors */
+    .model-selector-group {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    
+    .model-radio-card {
+      position: relative;
+      cursor: pointer;
+      border: 1px solid var(--border-color);
+      background: var(--bg-card);
+      border-radius: var(--radius-sm);
+      padding: 1.25rem;
+      transition: var(--transition);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .model-radio-card.active {
+      border-color: var(--primary);
+      background: var(--bg-card-hover);
+      box-shadow: 0 0 15px var(--primary-glow);
+    }
+    
+    .model-radio-card input[type="radio"] {
+      display: none;
+    }
+    
+    .radio-circle {
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--border-color);
+      border-radius: 50%;
+      display: inline-block;
+      position: relative;
+      transition: var(--transition);
+    }
+    
+    .model-radio-card.active .radio-circle {
+      border-color: var(--primary);
+    }
+    
+    .model-radio-card.active .radio-circle::after {
+      content: "";
+      position: absolute;
+      top: 4px;
+      left: 4px;
+      width: 8px;
+      height: 8px;
+      background: var(--primary);
+      border-radius: 50%;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Premium Navigation Bar -->
+    <nav class="navbar">
+      <a href="index.html" class="nav-brand">
+        <div class="brand-icon">VG</div>
+        <span class="brand-text">VisionGuard AI</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="dashboard.html">AI Scanner</a></li>
+        <li><a href="maintenance.html">Maintenance</a></li>
+        <li><a href="analytics.html">Analytics</a></li>
+        <li><a href="inventory.html">Inventory</a></li>
+        <li><a href="settings.html">Settings</a></li>
+      </ul>
+      <div class="nav-status">
+        <div class="health-badge healthy" id="system-health-badge">
+          <span class="health-dot"></span> System Nominal
+        </div>
+      </div>
+      <button class="nav-toggle" id="nav-toggle-btn" aria-label="Toggle Menu">
+        <span class="bar"></span>
+        <span class="bar"></span>
+        <span class="bar"></span>
+      </button>
+    </nav>
+
+    <!-- Main Workspace -->
+    <main class="main-content">
+      <div class="page-header">
+        <div>
+          <h1>System Configuration & AI Models</h1>
+          <p>Calibrate defect classification confidence levels and toggle system integration listeners</p>
+        </div>
+      </div>
+
+      <div class="grid-main-dashboard">
+        
+        <!-- Left Side: Calibration Settings -->
+        <section class="glass-card">
+          <h2>AI Diagnostics Calibration</h2>
+          <p style="color:#94a3b8; font-size:0.85rem; margin-bottom:1.5rem;">Calibrate core scanning rules and alert thresholds for the neural network classification engine.</p>
+          
+          <form onsubmit="saveCalibrationSettings(event)">
+            <!-- Slider -->
+            <div class="form-group" style="margin-bottom:2rem;">
+              <label for="conf-threshold-slider">Defect Confidence Threshold (IoU)</label>
+              <p style="color:#64748b; font-size:0.75rem; margin-bottom:0.5rem;">Defect predictions with confidence below this threshold will be excluded from the analysis report.</p>
+              <div class="range-slider-container">
+                <input type="range" id="conf-threshold-slider" class="range-slider" min="50" max="95" value="75" oninput="document.getElementById('slider-val-lbl').innerText = this.value + '%'">
+                <span class="slider-val" id="slider-val-lbl">75%</span>
+              </div>
+            </div>
+
+            <!-- Toggles -->
+            <div style="display:flex; flex-direction:column; gap:1.25rem; border-top:1px solid var(--border-color); padding-top:1.5rem; margin-bottom:2rem;">
+              
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                  <strong style="font-size:0.95rem; display:block; color:#f1f5f9;">Autonomous Work Order Dispatch</strong>
+                  <span style="color:#64748b; font-size:0.78rem;">Instantly schedule critical priority work orders upon defect detection logs.</span>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" id="toggle-auto-dispatch" checked>
+                  <span class="slider-toggle"></span>
+                </label>
+              </div>
+
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                  <strong style="font-size:0.95rem; display:block; color:#f1f5f9;">GPU Inference Acceleration</strong>
+                  <span style="color:#64748b; font-size:0.78rem;">Maximize edge client shader usage to run scanning processes in sub-10ms ranges.</span>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" id="toggle-gpu-acc" checked>
+                  <span class="slider-toggle"></span>
+                </label>
+              </div>
+
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                  <strong style="font-size:0.95rem; display:block; color:#f1f5f9;">Compliance Broadcast Integration</strong>
+                  <span style="color:#64748b; font-size:0.78rem;">Broadcast JSON defect updates directly to plant compliance safety servers.</span>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" id="toggle-email-alerts" onchange="toggleEmailInput(this.checked)">
+                  <span class="slider-toggle"></span>
+                </label>
+              </div>
+
+            </div>
+
+            <!-- Email target input -->
+            <div class="form-group" id="email-group-panel" style="display:none; transition: var(--transition);">
+              <label for="alert-email">Broadcast Target Email Address</label>
+              <input type="email" id="alert-email" class="form-input" placeholder="e.g., supervisor-safety@plant-ops.com">
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%;">Save Configuration Settings</button>
+          </form>
+        </section>
+
+        <!-- Right Side: Model Selection Cards -->
+        <section class="glass-card">
+          <h2>Active AI Model Pipeline</h2>
+          <p style="color:#94a3b8; font-size:0.85rem; margin-bottom:1.5rem;">Select the active neural network architecture deployed to execute scans in the diagnostics dashboard.</p>
+          
+          <div class="model-selector-group" id="models-list-group">
+            <!-- Model cards are rendered here -->
+          </div>
+        </section>
+
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <p>© 2026 VisionGuard Systems Inc. • Plant Inspection Portal</p>
+    </footer>
+  </div>
+
+  <!-- Shared JS imports -->
+  <script src="data.js"></script>
+  <script src="shared.js"></script>
+  
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      // Load settings states from localStorage
+      loadCalibrationForm();
+      
+      // Load model radio card list
+      loadModelCards();
+    });
+
+    // Populate Slider & Switch values
+    function loadCalibrationForm() {
+      // Mock loading settings from localStorage or fallback
+      const cachedSlider = localStorage.getItem("setting_threshold") || "75";
+      document.getElementById("conf-threshold-slider").value = cachedSlider;
+      document.getElementById("slider-val-lbl").innerText = `${cachedSlider}%`;
+      
+      const cachedDispatch = localStorage.getItem("setting_auto_dispatch") !== "false";
+      document.getElementById("toggle-auto-dispatch").checked = cachedDispatch;
+      
+      const cachedGPU = localStorage.getItem("setting_gpu_acc") !== "false";
+      document.getElementById("toggle-gpu-acc").checked = cachedGPU;
+      
+      const cachedEmailToggle = localStorage.getItem("setting_email_toggle") === "true";
+      document.getElementById("toggle-email-alerts").checked = cachedEmailToggle;
+      toggleEmailInput(cachedEmailToggle);
+      
+      const cachedEmail = localStorage.getItem("setting_email_val") || "supervisor-safety@plant-ops.com";
+      document.getElementById("alert-email").value = cachedEmail;
+    }
+
+    function toggleEmailInput(visible) {
+      const panel = document.getElementById("email-group-panel");
+      panel.style.display = visible ? "flex" : "none";
+    }
+
+    // Populate model list group
+    function loadModelCards() {
+      const db = getSystemDB();
+      const container = document.getElementById("models-list-group");
+      container.innerHTML = "";
+      
+      db.models.forEach(model => {
+        const card = document.createElement("div");
+        card.className = `model-radio-card ${model.active ? 'active' : ''}`;
+        card.id = `model-card-${model.id}`;
+        card.onclick = () => selectActiveModel(model.id);
+        
+        card.innerHTML = `
+          <div style="flex:1; padding-right:1rem;">
+            <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.25rem;">
+              <strong style="color:white; font-size:1.05rem;">${model.name}</strong>
+              <span class="status-pill healthy" style="font-size:0.6rem; padding:0.1rem 0.3rem;">${model.type}</span>
+            </div>
+            <p style="color:#94a3b8; font-size:0.8rem; line-height:1.4;">${model.description}</p>
+            
+            <div class="model-stat-grid">
+              <div class="model-stat-item">
+                <span class="model-stat-label">Precision</span>
+                <span class="model-stat-value">${model.precision}%</span>
+              </div>
+              <div class="model-stat-item">
+                <span class="model-stat-label">Recall</span>
+                <span class="model-stat-value">${model.recall}%</span>
+              </div>
+              <div class="model-stat-item">
+                <span class="model-stat-label">Latency</span>
+                <span class="model-stat-value">${model.latency} ms</span>
+              </div>
+            </div>
+          </div>
+          <div>
+            <span class="radio-circle"></span>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    // Select different AI Model pipeline
+    function selectActiveModel(modelId) {
+      // Toggle card active states in UI
+      document.querySelectorAll(".model-radio-card").forEach(el => el.classList.remove("active"));
+      const card = document.getElementById(`model-card-${modelId}`);
+      if (card) card.classList.add("active");
+      
+      updateDB(db => {
+        db.models.forEach(m => {
+          m.active = (m.id === modelId);
+        });
+      });
+      
+      // Reload models
+      loadModelCards();
+      
+      const db = getSystemDB();
+      const selectedModelName = db.models.find(m => m.id === modelId).name;
+      showToast(`Active scan pipeline changed to: ${selectedModelName}`, "success");
+    }
+
+    // Save calibration settings
+    function saveCalibrationSettings(e) {
+      e.preventDefault();
+      
+      const sliderVal = document.getElementById("conf-threshold-slider").value;
+      const dispatchVal = document.getElementById("toggle-auto-dispatch").checked;
+      const gpuVal = document.getElementById("toggle-gpu-acc").checked;
+      const emailToggleVal = document.getElementById("toggle-email-alerts").checked;
+      const emailVal = document.getElementById("alert-email").value;
+      
+      // Cache settings in localStorage
+      localStorage.setItem("setting_threshold", sliderVal);
+      localStorage.setItem("setting_auto_dispatch", dispatchVal);
+      localStorage.setItem("setting_gpu_acc", gpuVal);
+      localStorage.setItem("setting_email_toggle", emailToggleVal);
+      localStorage.setItem("setting_email_val", emailVal);
+      
+      showToast("System calibration configurations successfully saved.", "success");
+    }
+  </script>
+</body>
+</html>
